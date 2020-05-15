@@ -149,7 +149,7 @@ impl R {
     }
 
     pub fn bool(&mut self) -> bool {
-        (self.next() % 1) == 1
+        (self.next() % 2) == 1
     }
 
     pub fn num<T: NumPrimitive>(&mut self) -> T {
