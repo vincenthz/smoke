@@ -13,8 +13,7 @@ description = "A framework for testing"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-getrandom = { version = "0.1", optional = true }
 
 [features]
-default = ["random"]
-random = [ "getrandom" ]
+default = []
+

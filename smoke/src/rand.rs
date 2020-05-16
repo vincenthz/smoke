@@ -19,10 +19,31 @@ pub struct Seed(u128);
 pub struct R(u64, u64);
 
 impl Seed {
-    #[cfg(features = "random")]
+    /// Create a new random seed, using the system time and the thread-id.
+    ///
+    /// Whilst this is not particularly random, we just need a little randomization
+    /// not a full blown unguessable entropy. The quality of this randomness
+    /// is not particularly important or interesting.
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let buf = osrand::new();
-        Seed::from(u128::from_le_bytes(buf))
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        use std::time::SystemTime;
+
+        let mut hasher = DefaultHasher::new();
+
+        // get the system time and hash it
+        let now = SystemTime::now();
+        now.hash(&mut hasher);
+        let r1 = u128::from(hasher.finish());
+
+        // append some randomized stuff on top
+        let tid = std::thread::current().id();
+        tid.hash(&mut hasher);
+        let r2 = u128::from(hasher.finish());
+
+        let r = (r1 << 64) | r2;
+        Seed::from(r)
     }
 }
 
@@ -68,24 +89,9 @@ impl std::fmt::Display for Seed {
     }
 }
 
-// abstract entropy / random number seed from system, so that we can use
-// a non-really random but random looking source using various low quality
-// source of pseudo random like time and system variations
-#[cfg(features = "random")]
-mod osrand {
-    use getrandom::getrandom;
-
-    pub fn new() -> [u8; 16] {
-        let mut buf = [0u8; 16];
-        getrandom(&mut buf).expect("random gathering failed");
-        buf
-    }
-}
-
 const MUL_FACTOR: u64 = 636_4136_2238_4679_3005;
 
 impl R {
-    #[cfg(features = "random")]
     pub fn new() -> (Seed, Self) {
         let seed = Seed::new();
         let r = Self::from_seed(seed);
