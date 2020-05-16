@@ -27,10 +27,7 @@ pub trait Generator {
         Self: Sized,
         F: Fn(Self::Item) -> O,
     {
-        Map {
-            generator: self,
-            f: f,
-        }
+        Map { generator: self, f }
     }
 
     /// Filter the generated items such that only the item
@@ -48,10 +45,7 @@ pub trait Generator {
         Self: Sized,
         F: Fn(Self::Item) -> bool + Clone,
     {
-        SuchThat {
-            generator: self,
-            f: f,
-        }
+        SuchThat { generator: self, f }
     }
 
     fn and<G>(self, other: G) -> And<Self, G>
@@ -118,7 +112,7 @@ pub struct Num<T>(PhantomData<T>);
 
 impl<T> Clone for Num<T> {
     fn clone(&self) -> Self {
-        Num(self.0.clone())
+        Num(self.0)
     }
 }
 
@@ -303,7 +297,7 @@ pub struct Choose<T> {
 
 impl<T> Choose<T> {
     fn new(vec: Vec<Box<dyn Generator<Item = T>>>) -> Self {
-        assert!(vec.len() > 0);
+        assert!(!vec.is_empty());
         Choose {
             generators: Arc::new(vec.into()),
         }
@@ -322,11 +316,14 @@ impl<T> Generator for Choose<T> {
 #[derive(Clone)]
 pub struct Frequency<T> {
     frequencies: Box<[usize]>,
-    generators: Arc<Box<[(usize, Box<dyn Generator<Item = T>>)]>>,
+    generators: Arc<Box<[WeightedBoxGenerator<T>]>>,
 }
 
+/// A Generic Boxed Generator with an associated weight (for frequency)
+type WeightedBoxGenerator<T> = (usize, BoxGenerator<T>);
+
 impl<T> Frequency<T> {
-    fn new(gens: Vec<(usize, Box<dyn Generator<Item = T>>)>) -> Self {
+    fn new(gens: Vec<(usize, BoxGenerator<T>)>) -> Self {
         let total: usize = gens.iter().map(|x| x.0).sum();
         let mut frequencies = Vec::with_capacity(total);
         for (i, (nb, _)) in gens.iter().enumerate() {
@@ -511,7 +508,7 @@ pub fn range<T: NumPrimitive>(range: std::ops::Range<T>) -> NumRange<T> {
 
 /// Choose randomly from a list of T elements
 pub fn one_of<T: Clone>(slice: &[T]) -> OneOf<T> {
-    let copied: Vec<_> = slice.into_iter().cloned().collect();
+    let copied: Vec<_> = slice.to_vec();
     OneOf {
         data: copied.into_boxed_slice(),
     }
@@ -521,7 +518,7 @@ pub fn one_of<T: Clone>(slice: &[T]) -> OneOf<T> {
 ///
 /// If the vector is empty then a runtime error is thrown
 pub fn choose<T>(gens: Vec<Box<dyn Generator<Item = T>>>) -> Choose<T> {
-    assert!(gens.len() > 0);
+    assert!(!gens.is_empty());
     Choose::new(gens)
 }
 
@@ -533,8 +530,13 @@ pub fn choose<T>(gens: Vec<Box<dyn Generator<Item = T>>>) -> Choose<T> {
 ///
 /// If the vector is empty then a runtime error is thrown
 pub fn frequency<T>(gens: Vec<(usize, Box<dyn Generator<Item = T>>)>) -> Frequency<T> {
-    assert!(gens.len() > 0);
-    Frequency::new(gens)
+    assert!(!gens.is_empty());
+    let mut frequencies_gen = Vec::new();
+    for (freq, gen) in gens.into_iter() {
+        frequencies_gen.push((freq, BoxGenerator(gen)))
+    }
+
+    Frequency::new(frequencies_gen)
 }
 
 /// Product of 2 generators, figuratively: F(G1, G2)

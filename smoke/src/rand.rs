@@ -35,17 +35,17 @@ impl From<u128> for Seed {
 impl std::str::FromStr for Seed {
     type Err = &'static str;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let v = s
+    fn from_str(str: &str) -> Result<Self, Self::Err> {
+        let chunk = str
             .split('-')
             .map(|e| u32::from_str_radix(e, 16))
             .collect::<Vec<_>>();
-        if v.len() == 4 {
-            match (&v[0], &v[1], &v[2], &v[3]) {
+        if chunk.len() == 4 {
+            match (&chunk[0], &chunk[1], &chunk[2], &chunk[3]) {
                 (Ok(a), Ok(b), Ok(c), Ok(d)) => {
-                    let v =
+                    let seed =
                         (*a as u128) << 96 | (*b as u128) << 64 | (*c as u128) << 32 | (*d as u128);
-                    Ok(Seed::from(v))
+                    Ok(Seed::from(seed))
                 }
                 (Err(_), _, _, _) => Err("cannot parse 1st element as hexadecimal integer"),
                 (_, Err(_), _, _) => Err("cannot parse 2nd element as hexadecimal integer"),
@@ -82,6 +82,8 @@ mod osrand {
     }
 }
 
+const MUL_FACTOR: u64 = 636_4136_2238_4679_3005;
+
 impl R {
     #[cfg(features = "random")]
     pub fn new() -> (Seed, Self) {
@@ -103,9 +105,7 @@ impl R {
 
     pub(crate) fn next(&mut self) -> u32 {
         let old_state = self.0;
-        self.0 = old_state
-            .wrapping_mul(6364136223846793005)
-            .wrapping_add(self.1 | 1);
+        self.0 = old_state.wrapping_mul(MUL_FACTOR).wrapping_add(self.1 | 1);
         let xor_shifted = (((old_state >> 18) ^ old_state) >> 27) as u32;
         let rot = (old_state >> 59) as u32;
         xor_shifted.rotate_right(rot)
@@ -131,19 +131,17 @@ impl R {
     pub fn ascii(&mut self) -> char {
         loop {
             let v = self.next() % 0x80;
-            match std::char::from_u32(v) {
-                Some(c) => break c,
-                None => {}
+            if let Some(c) = std::char::from_u32(v) {
+                break c;
             }
         }
     }
 
     pub fn codepoint(&mut self) -> char {
         loop {
-            let v = self.next() % 0x110000;
-            match std::char::from_u32(v) {
-                Some(c) => break c,
-                None => {}
+            let v = self.next() % 0x11_0000;
+            if let Some(c) = std::char::from_u32(v) {
+                break c;
             }
         }
     }
