@@ -40,6 +40,12 @@ pub trait Generator {
     /// rule of thumb, is that if the callback accept
     /// less than half the generated value, then it should
     /// probably be refined at the source generator.
+    ///
+    /// ```
+    /// use smoke::{Generator, generator::range};
+    /// // u32 number between 1 and 1000 that are odd only
+    /// let odd_gen = range(1u32..1000).such_that(|n| (n & 0x1) == 1);
+    /// ```
     fn such_that<F>(self, f: F) -> SuchThat<Self, F>
     where
         Self: Sized,
