@@ -11,8 +11,10 @@
 //! The tests and generator frameworks can be used independently
 
 pub mod generator;
+pub mod property;
 mod rand;
 mod ux;
 
 pub use generator::Generator;
+pub use property::Property;
 pub use rand::{NumPrimitive, Seed, R};
