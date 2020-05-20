@@ -13,8 +13,12 @@
 pub mod generator;
 pub mod property;
 mod rand;
+mod run;
 mod ux;
+
+mod initonce;
 
 pub use generator::Generator;
 pub use property::Property;
 pub use rand::{NumPrimitive, Seed, R};
+pub use run::{forall, run, Ensure, Testable};
