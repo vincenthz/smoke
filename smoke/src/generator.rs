@@ -45,7 +45,11 @@ pub trait Generator {
         Self: Sized,
         F: Fn(Self::Item) -> bool + Clone,
     {
-        SuchThat { generator: self, f }
+        SuchThat {
+            retry: 1000,
+            generator: self,
+            f,
+        }
     }
 
     fn and<G>(self, other: G) -> And<Self, G>
@@ -251,9 +255,13 @@ where
 /// generate Item elements where the predicate is valid only.
 #[derive(Clone)]
 pub struct SuchThat<G, F> {
+    retry: u32,
     generator: G,
     f: F,
 }
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct SuchThatRetryFailure;
 
 impl<G: Generator, F> Generator for SuchThat<G, F>
 where
@@ -261,14 +269,14 @@ where
 {
     type Item = G::Item;
     fn gen(&self, r: &mut R) -> Self::Item {
-        let mut retry = 1000;
+        let mut retry = self.retry;
         loop {
             let x = self.generator.gen(r);
             if (self.f)(&x) {
                 break x;
             }
             if retry == 0 {
-                panic!("retry potential infinite loop")
+                panic!(SuchThatRetryFailure)
             } else {
                 retry -= 1;
             }
