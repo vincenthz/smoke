@@ -12,6 +12,7 @@
 
 pub mod generator;
 mod rand;
+mod ux;
 
 pub use generator::Generator;
 pub use rand::{NumPrimitive, Seed, R};
