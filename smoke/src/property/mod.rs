@@ -1,3 +1,5 @@
+//! First-class Property tree
+
 mod api;
 mod collection;
 mod comparison;

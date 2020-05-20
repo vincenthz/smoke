@@ -22,6 +22,12 @@ pub trait Generator {
     fn gen(&self, r: &mut R) -> Self::Item;
 
     /// Map the output of a generator through a function
+    ///
+    /// ```
+    /// use smoke::{Generator, generator::num};
+    ///
+    /// let generator = num::<u32>().map(|n| n + 1);
+    /// ```
     fn map<O, F>(self, f: F) -> Map<Self, F>
     where
         Self: Sized,
@@ -58,6 +64,17 @@ pub trait Generator {
         }
     }
 
+    /// Combine two arbitrary generators into one that generate tuple item of both generators,
+    /// transforming generator for A and generator for B into one generator of (A,B)
+    ///
+    /// ```
+    /// use smoke::{Generator, generator::{Num, num}};
+    ///
+    /// let generator_a : Num<u32> = num();
+    /// let generator_b : Num<u64> = num();
+    ///
+    /// let generator = generator_a.and(generator_b);
+    /// ```
     fn and<G>(self, other: G) -> And<Self, G>
     where
         Self: Sized,

@@ -13,9 +13,22 @@ use core::num::{
     NonZeroIsize, NonZeroU128, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
 };
 
+/// Seed of random generation
+///
+/// There should be only one instance of this for a given instance of a test suite,
+/// so that in case of issues, the printed seed of the failed attempt can be re-used
+/// as test driven development
+///
+/// All pseudo random generators need to be derived from this
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Seed(u128);
 
+/// A pseudo random generator at a given time
+///
+/// it can created from seed using `R::from_seed`, or
+/// from another pseudo random generator using `.sub()`
+/// as to create a hierarchy (or a tree) of generator.
+///
 pub struct R(u64, u64);
 
 impl Seed {
@@ -177,6 +190,8 @@ impl R {
     }
 }
 
+/// Various instance of numbers generation for primitive num
+/// types (u8, u16, ..., u128, i8, ..., NonZeroU8, ...)
 pub trait NumPrimitive: Copy {
     /// Return a new value in the whole possible domain of Self
     fn num(r: &mut R) -> Self;

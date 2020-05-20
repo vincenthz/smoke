@@ -57,6 +57,14 @@ impl<G> Forall<G> {
     }
 }
 
+/// Put a generator in random sampling mode for property testing
+///
+/// ```
+/// use smoke::{Generator, generator::num, property::equal, forall};
+///
+/// let property_equal = forall(num::<u32>()).ensure(|x| equal(*x, *x));
+/// ```
+///
 pub fn forall<T, G>(g: G) -> Forall<G>
 where
     G: Generator<Item = T>,
@@ -70,11 +78,13 @@ pub struct Context {
     test_results: TestResults,
 }
 
+/// A testable statement binding a generator with a property
 pub struct Ensure<G: Generator, F> {
     generator: G,
     property_closure: F,
 }
 
+/// Any tests to run with a testing context
 pub trait Testable {
     fn test(self, context: &mut Context);
 }
@@ -143,6 +153,19 @@ impl Context {
     }
 }
 
+/// Create a new context to execute tests into
+///
+/// ```
+/// use smoke::{run, forall, Generator, Property, Testable, generator::num, property::greater};
+///
+/// run(|ctx| {
+///     forall(num::<u32>())
+///         .ensure(|n| greater(*n + 1, *n))
+///         .test(ctx);
+///     // other test instances
+/// });
+/// ```
+///
 pub fn run<F>(f: F)
 where
     F: Fn(&mut Context) -> (),
