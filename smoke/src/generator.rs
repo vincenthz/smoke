@@ -106,7 +106,7 @@ impl<T> Generator for BoxGenerator<T> {
     }
     fn into_boxed(self) -> BoxGenerator<Self::Item> {
         self
-}
+    }
 }
 
 /// Constant generator, always return the same value
