@@ -94,6 +94,9 @@ impl<T> Generator for BoxGenerator<T> {
     fn gen(&self, r: &mut R) -> Self::Item {
         self.0.gen(r)
     }
+    fn into_boxed(self) -> BoxGenerator<Self::Item> {
+        self
+}
 }
 
 /// Constant generator, always return the same value
