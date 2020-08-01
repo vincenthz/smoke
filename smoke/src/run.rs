@@ -8,6 +8,7 @@ use std::panic::{catch_unwind, set_hook, take_hook, AssertUnwindSafe, PanicInfo}
 use std::time::{Duration, SystemTime};
 
 const ENV_SEED: &str = "SMOKE_SEED";
+const ENV_NO_PANIC_CATCH: &str = "SMOKE_NO_PANIC_CATCH";
 
 pub struct PanicError(String);
 
@@ -21,19 +22,24 @@ fn run_catch_panic<F, R>(f: F) -> Result<R, PanicError>
 where
     F: FnOnce() -> R,
 {
-    match catch_unwind(AssertUnwindSafe(f)) {
-        Err(e) => {
-            if let Some(SuchThatRetryFailure) = e.downcast_ref::<SuchThatRetryFailure>() {
-                Err(PanicError("such that retry failure".to_string()))
-            } else if let Some(e) = e.downcast_ref::<&'static str>() {
-                Err(PanicError((*e).to_string()))
-            } else if let Some(e) = e.downcast_ref::<String>() {
-                Err(PanicError(e.clone()))
-            } else {
-                Err(PanicError("unknown type of panic error".to_string()))
+    let no_catch_panic = std::env::var(ENV_NO_PANIC_CATCH).is_ok();
+    if no_catch_panic {
+        Ok(f())
+    } else {
+        match catch_unwind(AssertUnwindSafe(f)) {
+            Err(e) => {
+                if let Some(SuchThatRetryFailure) = e.downcast_ref::<SuchThatRetryFailure>() {
+                    Err(PanicError("such that retry failure".to_string()))
+                } else if let Some(e) = e.downcast_ref::<&'static str>() {
+                    Err(PanicError((*e).to_string()))
+                } else if let Some(e) = e.downcast_ref::<String>() {
+                    Err(PanicError(e.clone()))
+                } else {
+                    Err(PanicError("unknown type of panic error".to_string()))
+                }
             }
+            Ok(prop_result) => Ok(prop_result),
         }
-        Ok(prop_result) => Ok(prop_result),
     }
 }
 
