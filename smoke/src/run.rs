@@ -91,10 +91,10 @@ pub struct Ensure<G: Generator, F> {
 }
 
 /// Any tests to run with a testing context
-pub trait Testable: Sized {
-    fn test(self, context: &Context) -> TestResults;
+pub trait Testable {
+    fn test(&self, context: &Context) -> TestResults;
 
-    fn run(self, context: &mut Context) {
+    fn run(&self, context: &mut Context) {
         let results = self.test(context);
         context.test_results.add_subtests(&results);
     }
@@ -107,7 +107,7 @@ where
     F: Fn(&T) -> P,
     T: fmt::Debug + 'static,
 {
-    fn test(self, context: &Context) -> TestResults {
+    fn test(&self, context: &Context) -> TestResults {
         let mut r = R::from_seed(context.seed);
 
         let nb_tests = 1000;
@@ -116,8 +116,8 @@ where
 
         let mut result = TestResults::new();
 
-        let generator = self.generator;
-        let property_closure = self.property_closure;
+        let generator = &self.generator;
+        let property_closure = &self.property_closure;
         for _ in 0..nb_tests {
             let mut test_rng = r.sub();
 
