@@ -22,3 +22,4 @@ pub use generator::Generator;
 pub use property::Property;
 pub use rand::{NumPrimitive, Seed, R};
 pub use run::{forall, run, Ensure, Testable};
+pub use ux::TestResults;
