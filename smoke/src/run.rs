@@ -91,8 +91,13 @@ pub struct Ensure<G: Generator, F> {
 }
 
 /// Any tests to run with a testing context
-pub trait Testable {
-    fn test(self, context: &mut Context);
+pub trait Testable: Sized {
+    fn test(self, seed: Seed) -> TestResults;
+
+    fn run(self, context: &mut Context) {
+        let results = self.test(context.seed);
+        context.test_results.add_subtests(&results);
+    }
 }
 
 impl<T, G, F, P> Testable for Ensure<G, F>
@@ -102,8 +107,8 @@ where
     F: Fn(&T) -> P,
     T: fmt::Debug + 'static,
 {
-    fn test(self, context: &mut Context) {
-        let mut r = R::from_seed(context.seed);
+    fn test(self, seed: Seed) -> TestResults {
+        let mut r = R::from_seed(seed);
 
         println!("{:?}", std::env::args().collect::<Vec<_>>());
 
@@ -140,7 +145,7 @@ where
             .duration_since(start)
             .unwrap_or_else(|_| Duration::default());
         result.set_duration(duration);
-        context.test_results.add_subtests(&result);
+        result
     }
 }
 
@@ -167,7 +172,7 @@ impl Context {
 /// run(|ctx| {
 ///     forall(num::<u32>())
 ///         .ensure(|n| greater(*n + 1, *n))
-///         .test(ctx);
+///         .run(ctx);
 ///     // other test instances
 /// });
 /// ```
