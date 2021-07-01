@@ -7,7 +7,10 @@ use super::R;
 use std::panic::{catch_unwind, set_hook, take_hook, AssertUnwindSafe, PanicInfo};
 use std::time::{Duration, SystemTime};
 
+const DEFAULT_NB_TESTS: u64 = 1_000;
+
 const ENV_SEED: &str = "SMOKE_SEED";
+const ENV_NB_TESTS: &str = "SMOKE_NB_TESTS";
 const ENV_NO_PANIC_CATCH: &str = "SMOKE_NO_PANIC_CATCH";
 
 pub struct PanicError(String);
@@ -81,6 +84,7 @@ where
 /// Execution context
 pub struct Context {
     seed: Seed,
+    nb_tests: u64,
     test_results: TestResults,
 }
 
@@ -110,7 +114,7 @@ where
     fn test(&self, context: &Context) -> TestResults {
         let mut r = R::from_seed(context.seed);
 
-        let nb_tests = 1000;
+        let nb_tests = context.nb_tests;
 
         let start = SystemTime::now();
 
@@ -155,8 +159,13 @@ impl Context {
             Ok(v) => Seed::from_str(&v).expect("invalid seed format"),
             Err(_) => *INSTANCE_SEED.load(Seed::generate),
         };
+        let nb_tests = match std::env::var(ENV_NB_TESTS) {
+            Ok(v) => v.parse().expect("invalid seed format"),
+            Err(_) => DEFAULT_NB_TESTS,
+        };
         Self {
             seed,
+            nb_tests,
             test_results: TestResults::new(),
         }
     }
@@ -167,6 +176,14 @@ impl Context {
 
     pub fn set_seed(&mut self, seed: Seed) {
         self.seed = seed;
+    }
+
+    pub fn nb_tests(&self) -> u64 {
+        self.nb_tests
+    }
+
+    pub fn set_nb_tests(&mut self, nb_tests: u64) {
+        self.nb_tests = nb_tests;
     }
 }
 
