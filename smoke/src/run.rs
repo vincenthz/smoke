@@ -92,7 +92,12 @@ pub struct Ensure<G: Generator, F> {
 
 /// Any tests to run with a testing context
 pub trait Testable {
-    fn test(self, context: &mut Context);
+    fn test(&self, context: &Context) -> TestResults;
+
+    fn run(&self, context: &mut Context) {
+        let results = self.test(context);
+        context.test_results.add_subtests(&results);
+    }
 }
 
 impl<T, G, F, P> Testable for Ensure<G, F>
@@ -102,10 +107,8 @@ where
     F: Fn(&T) -> P,
     T: fmt::Debug + 'static,
 {
-    fn test(self, context: &mut Context) {
+    fn test(&self, context: &Context) -> TestResults {
         let mut r = R::from_seed(context.seed);
-
-        println!("{:?}", std::env::args().collect::<Vec<_>>());
 
         let nb_tests = 1000;
 
@@ -113,8 +116,8 @@ where
 
         let mut result = TestResults::new();
 
-        let generator = self.generator;
-        let property_closure = self.property_closure;
+        let generator = &self.generator;
+        let property_closure = &self.property_closure;
         for _ in 0..nb_tests {
             let mut test_rng = r.sub();
 
@@ -140,22 +143,30 @@ where
             .duration_since(start)
             .unwrap_or_else(|_| Duration::default());
         result.set_duration(duration);
-        context.test_results.add_subtests(&result);
+        result
     }
 }
 
 impl Context {
     #[allow(clippy::new_without_default)]
-    fn new() -> Self {
+    pub fn new() -> Self {
         use std::str::FromStr;
         let seed = match std::env::var(ENV_SEED) {
             Ok(v) => Seed::from_str(&v).expect("invalid seed format"),
-            Err(_) => *INSTANCE_SEED.load(Seed::new),
+            Err(_) => *INSTANCE_SEED.load(Seed::generate),
         };
         Self {
             seed,
             test_results: TestResults::new(),
         }
+    }
+
+    pub fn seed(&self) -> Seed {
+        self.seed
+    }
+
+    pub fn set_seed(&mut self, seed: Seed) {
+        self.seed = seed;
     }
 }
 
@@ -167,7 +178,7 @@ impl Context {
 /// run(|ctx| {
 ///     forall(num::<u32>())
 ///         .ensure(|n| greater(*n + 1, *n))
-///         .test(ctx);
+///         .run(ctx);
 ///     // other test instances
 /// });
 /// ```

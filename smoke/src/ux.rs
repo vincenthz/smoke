@@ -122,7 +122,7 @@ pub enum TestRunStatus {
 }
 
 /// A more detailed status of a test run
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct TestResults {
     /// Total inner tests
     pub nb_tests: usize,
@@ -152,14 +152,7 @@ impl TestResults {
     }
 
     pub fn new() -> Self {
-        TestResults {
-            nb_tests: 0,
-            nb_success: 0,
-            nb_failed: 0,
-            nb_skipped: 0,
-            failures: Vec::new(),
-            duration: Duration::new(0, 0),
-        }
+        Self::default()
     }
 
     pub fn add_success(&mut self) {
