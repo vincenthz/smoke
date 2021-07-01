@@ -1,8 +1,9 @@
 //! small utility to initialize a static variable only once with a function
 
 use core::cell::UnsafeCell;
+use core::hint::spin_loop;
 use core::mem::MaybeUninit;
-use core::sync::atomic::{spin_loop_hint, AtomicUsize, Ordering};
+use core::sync::atomic::{AtomicUsize, Ordering};
 
 pub struct InitOnce<T> {
     status: AtomicUsize,
@@ -47,7 +48,7 @@ impl<T> InitOnce<T> {
         } else if status == STATUS_INITING {
             // wait to be done
             while self.status.load(Ordering::SeqCst) != STATUS_DONE {
-                spin_loop_hint()
+                spin_loop()
             }
         }
 
