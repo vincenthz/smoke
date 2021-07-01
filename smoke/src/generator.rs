@@ -299,7 +299,7 @@ where
                 break x;
             }
             if retry == 0 {
-                panic!(SuchThatRetryFailure)
+                std::panic::panic_any(SuchThatRetryFailure);
             } else {
                 retry -= 1;
             }
