@@ -20,7 +20,7 @@ use core::num::{
 /// as test driven development
 ///
 /// All pseudo random generators need to be derived from this
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub struct Seed(u128);
 
 /// A pseudo random generator at a given time
@@ -37,8 +37,7 @@ impl Seed {
     /// Whilst this is not particularly random, we just need a little randomization
     /// not a full blown unguessable entropy. The quality of this randomness
     /// is not particularly important or interesting.
-    #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
+    pub fn generate() -> Self {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
         use std::time::SystemTime;
@@ -106,7 +105,7 @@ const MUL_FACTOR: u64 = 636_4136_2238_4679_3005;
 
 impl R {
     pub fn new() -> (Seed, Self) {
-        let seed = Seed::new();
+        let seed = Seed::generate();
         let r = Self::from_seed(seed);
         (seed, r)
     }

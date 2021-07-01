@@ -92,10 +92,10 @@ pub struct Ensure<G: Generator, F> {
 
 /// Any tests to run with a testing context
 pub trait Testable: Sized {
-    fn test(self, seed: Seed) -> TestResults;
+    fn test(self, context: &Context) -> TestResults;
 
     fn run(self, context: &mut Context) {
-        let results = self.test(context.seed);
+        let results = self.test(context);
         context.test_results.add_subtests(&results);
     }
 }
@@ -107,10 +107,8 @@ where
     F: Fn(&T) -> P,
     T: fmt::Debug + 'static,
 {
-    fn test(self, seed: Seed) -> TestResults {
-        let mut r = R::from_seed(seed);
-
-        println!("{:?}", std::env::args().collect::<Vec<_>>());
+    fn test(self, context: &Context) -> TestResults {
+        let mut r = R::from_seed(context.seed);
 
         let nb_tests = 1000;
 
@@ -151,16 +149,24 @@ where
 
 impl Context {
     #[allow(clippy::new_without_default)]
-    fn new() -> Self {
+    pub fn new() -> Self {
         use std::str::FromStr;
         let seed = match std::env::var(ENV_SEED) {
             Ok(v) => Seed::from_str(&v).expect("invalid seed format"),
-            Err(_) => *INSTANCE_SEED.load(Seed::new),
+            Err(_) => *INSTANCE_SEED.load(Seed::generate),
         };
         Self {
             seed,
             test_results: TestResults::new(),
         }
+    }
+
+    pub fn seed(&self) -> Seed {
+        self.seed
+    }
+
+    pub fn set_seed(&mut self, seed: Seed) {
+        self.seed = seed;
     }
 }
 
