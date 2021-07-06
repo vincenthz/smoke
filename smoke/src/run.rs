@@ -206,7 +206,7 @@ where
 {
     let mut ctx = Context::new();
 
-    fn dont_print_panic(_: &PanicInfo) {};
+    fn dont_print_panic(_: &PanicInfo) {}
 
     set_hook(Box::new(dont_print_panic));
 
