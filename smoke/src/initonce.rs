@@ -33,7 +33,13 @@ impl<T> InitOnce<T> {
     {
         let status = self
             .status
-            .compare_and_swap(STATUS_UNINIT, STATUS_INITING, Ordering::SeqCst);
+            .compare_exchange(
+                STATUS_UNINIT,
+                STATUS_INITING,
+                Ordering::SeqCst,
+                Ordering::SeqCst,
+            )
+            .unwrap_or_else(|st| st);
         if status == STATUS_UNINIT {
             // call F to write to cell and set the status to done
             let value = f();
