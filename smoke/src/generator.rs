@@ -452,6 +452,38 @@ where
 use std::mem::MaybeUninit;
 use std::ptr;
 
+/// A generator of array of constant length N where elements are defined by a generator
+pub struct Array<G, const N: usize> {
+    gen: G,
+}
+
+impl<G: Generator, const N: usize> Array<G, N> {
+    pub fn new(g: G) -> Self {
+        Self { gen: g }
+    }
+}
+
+impl<T, G, const N: usize> Generator for Array<G, N>
+where
+    G: Generator<Item = T>,
+{
+    type Item = [T; N];
+    fn gen<'a>(&self, r: &mut R) -> Self::Item {
+        let mut items: [MaybeUninit<T>; N] = unsafe { MaybeUninit::uninit().assume_init() };
+        let mut sub_r = r.sub();
+        for elem in &mut items[..] {
+            let cell: T = (self.gen).gen(&mut sub_r);
+            unsafe { ptr::write(elem.as_mut_ptr(), cell) }
+        }
+
+        // https://github.com/rust-lang/rust/issues/61956
+        let ptr = &mut items as *mut _ as *mut [T; N];
+        let res = unsafe { ptr.read() };
+        core::mem::forget(items);
+        res
+    }
+}
+
 macro_rules! generator_array_impl {
     ($C: ident, $N: expr) => {
         /// A generator of array of size $N where elements are defined by a generator
