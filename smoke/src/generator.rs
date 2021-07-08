@@ -538,6 +538,13 @@ pub fn product2<G1, G2, F>(gen1: G1, gen2: G2, f: F) -> Product2<G1, G2, F> {
 }
 
 /// Product of 3 generators, figuratively: F(G1, G2, G3)
+///
+/// ```
+/// use smoke::generator::{product3, range, num};
+/// pub struct Point { x: u32, y: u32, z: u32 }
+///
+/// let pointgen = product3(num::<u32>(), num::<u32>(), range(1u32..3), |x, y, z| Point { x, y, z });
+/// ```
 pub fn product3<G1, G2, G3, F>(gen1: G1, gen2: G2, gen3: G3, f: F) -> Product3<G1, G2, G3, F> {
     Product3::new(gen1, gen2, gen3, f)
 }
