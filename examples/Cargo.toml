@@ -1,0 +1,11 @@
+[package]
+name = "examples"
+version = "0.1.0"
+authors = ["Vincent Hanquez <vincent@typed.io>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+smoke = { path = "../smoke"}
+smoke-macros = { path = "../smoke-macros"}

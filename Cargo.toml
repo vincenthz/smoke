@@ -2,4 +2,5 @@
 members = [
     "smoke",
     "smoke-macros",
+    "examples",
 ]
