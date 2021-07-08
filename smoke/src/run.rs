@@ -56,7 +56,7 @@ impl<G> Forall<G> {
     where
         G: Generator<Item = T>,
         P: Property,
-        F: Fn(&T) -> P,
+        F: Fn(T) -> P,
         T: fmt::Debug + Clone + 'static,
     {
         Ensure {
@@ -108,7 +108,7 @@ impl<T, G, F, P> Testable for Ensure<G, F>
 where
     G: Generator<Item = T>,
     P: Property,
-    F: Fn(&T) -> P,
+    F: Fn(T) -> P,
     T: fmt::Debug + 'static,
 {
     fn test(&self, context: &Context) -> TestResults {
@@ -126,16 +126,15 @@ where
             let mut test_rng = r.sub();
 
             let input = generator.gen(&mut test_rng);
-            let to_report = &input;
-            //println!("item: {:?}", v);
-            match run_catch_panic(|| property_closure(&input)) {
+            let to_report = format!("{:?}", &input);
+            match run_catch_panic(|| property_closure(input)) {
                 Err(PanicError(p)) => {
-                    result.add_failed(format!("input: {:?}\npanic: \"{}\"\n", to_report, p))
+                    result.add_failed(format!("input: {}\npanic: \"{}\"\n", to_report, p))
                 }
                 Ok(p) => match p.result() {
                     property::Outcome::Passed => result.add_success(),
                     property::Outcome::Failed(t) => result.add_failed(format!(
-                        "input = {:?}\nproperty failed:\n{}",
+                        "input = {}\nproperty failed:\n{}",
                         to_report,
                         t.display(2),
                     )),
