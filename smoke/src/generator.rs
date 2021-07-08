@@ -615,6 +615,20 @@ pub fn product3<G1, G2, G3, F>(gen1: G1, gen2: G2, gen3: G3, f: F) -> Product3<G
     Product3::new(gen1, gen2, gen3, f)
 }
 
+/// Create an array of elements where the size is defined of this array is determined by constant generic
+/// and the type of elements by the generator
+///
+/// ```
+/// use smoke::generator::{array, range};
+/// let array_gen = array::<_,_,32>(range(1u32..45));
+/// ```
+pub fn array<EL, T, const SZ: usize>(elements: EL) -> Array<EL, SZ>
+where
+    EL: Generator<Item = T>,
+{
+    Array { gen: elements }
+}
+
 /// Create a vector of elements where the size of the vector is determined by the first generator
 /// and the type of elements in the second
 pub fn vector<SZ, EL, T>(size: SZ, elements: EL) -> Vector<SZ, EL>
