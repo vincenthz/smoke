@@ -3,6 +3,12 @@ name = "smoke-macros"
 version = "0.1.0"
 authors = ["Vincent Hanquez <vincent@typed.io>"]
 edition = "2018"
+license = "MIT/Apache-2.0"
+homepage = "https://github.com/vincenthz/smoke"
+repository = "https://github.com/vincenthz/smoke"
+keywords = [ "tests", "generator", "quickcheck", "checks" ]
+categories = ["development-tools::testing"]
+description = "A framework for testing - macros part"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
