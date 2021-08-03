@@ -71,7 +71,7 @@ impl<G> Forall<G> {
 /// ```
 /// use smoke::{Generator, generator::num, property::equal, forall};
 ///
-/// let property_equal = forall(num::<u32>()).ensure(|x| equal(*x, *x));
+/// let property_equal = forall(num::<u32>()).ensure(|x| equal(x, x));
 /// ```
 ///
 pub fn forall<T, G>(g: G) -> Forall<G>
@@ -193,7 +193,7 @@ impl Context {
 ///
 /// run(|ctx| {
 ///     forall(num::<u32>())
-///         .ensure(|n| greater(*n + 1, *n))
+///         .ensure(|n| greater(n + 1, n))
 ///         .run(ctx);
 ///     // other test instances
 /// });
