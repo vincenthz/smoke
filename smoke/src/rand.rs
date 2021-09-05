@@ -312,6 +312,19 @@ impl NumPrimitive for usize {
     }
 }
 
+impl NumPrimitive for char {
+    fn num(r: &mut R) -> Self {
+        std::char::from_u32(r.next() % (std::char::MAX as u32 + 1)).unwrap()
+    }
+    fn num_range(r: &mut R, min_value: Self, max_value: Self) -> Self {
+        let min_value = min_value as u32;
+        let max_value = max_value as u32;
+        assert!(min_value <= max_value);
+        let diff = max_value - min_value + 1;
+        std::char::from_u32(min_value + (u32::num(r) % diff)).unwrap()
+    }
+}
+
 // unsigned -> signed cast based implementations
 
 macro_rules! define_NumPrimitive_impl_signed {
