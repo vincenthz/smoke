@@ -215,6 +215,28 @@ where
     }
 }
 
+/// 2-Tuple of 2 generators : G1 x G2
+#[derive(Clone)]
+pub struct Tuple2<G1, G2> {
+    gen1: G1,
+    gen2: G2,
+}
+
+impl<G1, G2> Tuple2<G1, G2> {
+    fn new(gen1: G1, gen2: G2) -> Self {
+        Tuple2 { gen1, gen2 }
+    }
+}
+
+impl<G1: Generator, G2: Generator> Generator for Tuple2<G1, G2> {
+    type Item = (G1::Item, G2::Item);
+    fn gen(&self, r: &mut R) -> Self::Item {
+        let x1 = self.gen1.gen(&mut r.sub());
+        let x2 = self.gen2.gen(&mut r.sub());
+        (x1, x2)
+    }
+}
+
 /// Product of 2 generators : G1 x G2
 #[derive(Clone)]
 pub struct Product2<G1, G2, F> {
@@ -530,6 +552,11 @@ pub fn frequency<T>(gens: Vec<(usize, Box<dyn Generator<Item = T>>)>) -> Frequen
     }
 
     Frequency::new(frequencies_gen)
+}
+
+/// Tuple of 2 generators, figuratively: (G1, G2)
+pub fn tuple2<G1, G2>(gen1: G1, gen2: G2) -> Tuple2<G1, G2> {
+    Tuple2::new(gen1, gen2)
 }
 
 /// Product of 2 generators, figuratively: F(G1, G2)
