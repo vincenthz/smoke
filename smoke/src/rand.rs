@@ -223,8 +223,8 @@ impl NumPrimitive for u8 {
         r.next() as u8
     }
     fn num_range(r: &mut R, min_value: Self, max_value: Self) -> Self {
-        assert!(min_value <= max_value);
-        let diff = max_value - min_value + 1;
+        assert!(min_value < max_value);
+        let diff = max_value - min_value;
         min_value + (r.next() as Self % diff)
     }
 }
@@ -235,8 +235,8 @@ impl NumPrimitive for u16 {
     }
 
     fn num_range(r: &mut R, min_value: Self, max_value: Self) -> Self {
-        assert!(min_value <= max_value);
-        let diff = max_value - min_value + 1;
+        assert!(min_value < max_value);
+        let diff = max_value - min_value;
         min_value + (r.next() as Self % diff)
     }
 }
@@ -246,8 +246,8 @@ impl NumPrimitive for u32 {
         r.next()
     }
     fn num_range(r: &mut R, min_value: Self, max_value: Self) -> Self {
-        assert!(min_value <= max_value);
-        let diff = max_value - min_value + 1;
+        assert!(min_value < max_value);
+        let diff = max_value - min_value;
         min_value + (u32::num(r) % diff)
     }
 }
@@ -259,8 +259,8 @@ impl NumPrimitive for u64 {
         v1 << 32 | v2
     }
     fn num_range(r: &mut R, min_value: Self, max_value: Self) -> Self {
-        assert!(min_value <= max_value);
-        let diff = max_value - min_value + 1;
+        assert!(min_value < max_value);
+        let diff = max_value - min_value;
         if diff > 0xffff_ffff {
             let v = Self::num(r) % diff;
             min_value + v
@@ -279,8 +279,8 @@ impl NumPrimitive for u128 {
         v1 << 96 | v2 << 64 | v3 << 32 | v4
     }
     fn num_range(r: &mut R, min_value: Self, max_value: Self) -> Self {
-        assert!(min_value <= max_value);
-        let diff = max_value - min_value + 1;
+        assert!(min_value < max_value);
+        let diff = max_value - min_value;
         if diff > 0xffff_ffff {
             let v = Self::num(r) % diff;
             min_value + v
@@ -301,8 +301,8 @@ impl NumPrimitive for usize {
         }
     }
     fn num_range(r: &mut R, min_value: Self, max_value: Self) -> Self {
-        assert!(min_value <= max_value);
-        let diff = max_value - min_value + 1;
+        assert!(min_value < max_value);
+        let diff = max_value - min_value;
         if diff > 0xffff_ffff {
             let v = Self::num(r) % diff;
             min_value + v
@@ -334,7 +334,6 @@ macro_rules! define_NumPrimitive_impl_signed {
                 <$unsigned_ty>::num(r) as $signed_ty
             }
             fn num_range(r: &mut R, min_value: Self, max_value: Self) -> Self {
-                assert!(min_value <= max_value);
                 <$unsigned_ty>::num_range(r, min_value as $unsigned_ty, max_value as $unsigned_ty)
                     as $signed_ty
             }
