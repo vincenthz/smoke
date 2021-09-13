@@ -51,3 +51,82 @@ pub fn num<T: NumPrimitive>() -> Num<T> {
 pub fn range<T: NumPrimitive>(range: std::ops::Range<T>) -> NumRange<T> {
     NumRange::new(range)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn range_boundaries<T>(start: T, end: T)
+    where T: NumPrimitive + PartialOrd
+    {
+        let (_, mut r) = R::new();
+
+        let range = std::ops::Range::<T>{ start, end };
+        let num_range = super::range::<T>(range.clone());
+
+        for _ in 0..1024 {
+            let v = num_range.gen(&mut r);
+            assert!(range.contains(&v));
+        }
+    }
+
+    #[test]
+    fn i8_range() {
+        range_boundaries::<i8>(1, 16);
+    }
+
+    #[test]
+    fn u8_range() {
+        range_boundaries::<u8>(1, 16);
+    }
+
+    #[test]
+    fn i16_range() {
+        range_boundaries::<i16>(1, 16);
+    }
+
+    #[test]
+    fn u16_range() {
+        range_boundaries::<u16>(1, 16);
+    }
+
+    #[test]
+    fn i32_range() {
+        range_boundaries::<i32>(1, 16);
+    }
+
+    #[test]
+    fn u32_range() {
+        range_boundaries::<u32>(1, 16);
+    }
+
+    #[test]
+    fn i64_range() {
+        range_boundaries::<i64>(1, 16);
+    }
+
+    #[test]
+    fn u64_range() {
+        range_boundaries::<u64>(1, 16);
+    }
+
+    #[test]
+    fn i128_range() {
+        range_boundaries::<i128>(1, 16);
+    }
+
+    #[test]
+    fn u128_range() {
+        range_boundaries::<u128>(1, 16);
+    }
+
+    #[test]
+    fn isize_range() {
+        range_boundaries::<isize>(1, 16);
+    }
+
+    #[test]
+    fn usize_range() {
+        range_boundaries::<usize>(1, 16);
+    }
+}
