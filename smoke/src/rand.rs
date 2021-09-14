@@ -12,6 +12,18 @@
 use core::num::{
     NonZeroIsize, NonZeroU128, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
 };
+use std::mem::size_of;
+use std::ops::{Bound, RangeBounds};
+use num_traits::{
+    bounds::Bounded,
+    cast::AsPrimitive,
+    identities::{Zero, One},
+    ops::{
+        checked::CheckedRem,
+        wrapping::WrappingShl,
+        saturating::{SaturatingSub, SaturatingAdd}
+    },
+};
 
 /// Seed of random generation
 ///
@@ -174,6 +186,15 @@ impl R {
 
     pub fn num_range<T: NumPrimitive>(&mut self, min_value: T, max_value: T) -> T {
         T::num_range(self, min_value, max_value)
+    }
+
+    pub fn num_range_bounds<T, U>(&mut self, range: &U) -> T
+    where U: RangeBounds<T>,
+          T: NumRangePrimitive,
+          T: AsPrimitive<<T as NumRangePrimitive>::UnsignedType>,
+          u32: AsPrimitive<<T as NumRangePrimitive>::UnsignedType>
+    {
+        T::generate_number(self, range)
     }
 
     pub fn array_num<T: NumPrimitive>(&mut self, buf: &mut [T]) {
@@ -386,6 +407,100 @@ define_NumPrimitive_impl_nonzero!(NonZeroU64, u64);
 define_NumPrimitive_impl_nonzero!(NonZeroU128, u128);
 define_NumPrimitive_impl_nonzero!(NonZeroUsize, usize);
 define_NumPrimitive_impl_nonzero!(NonZeroIsize, isize);
+
+
+pub trait NumRangePrimitive
+where Self: 'static + Copy,
+      Self: PartialOrd + One + Zero + Bounded + SaturatingAdd + SaturatingSub,
+      Self::UnsignedType: 'static + Copy,
+      Self::UnsignedType: AsPrimitive<Self>,
+      Self::UnsignedType: One + Zero + WrappingShl + SaturatingAdd + SaturatingSub + CheckedRem
+{
+    type UnsignedType;
+
+    fn generate_number<RB: RangeBounds<Self>>(r: &mut R, range: &RB) -> Self
+    where Self: AsPrimitive<<Self as NumRangePrimitive>::UnsignedType>,
+          u32: AsPrimitive<Self::UnsignedType>,
+    {
+        let start = match range.start_bound() {
+            Bound::Excluded(n) => n.saturating_add(&Self::one()),
+            Bound::Included(n) => n.clone(),
+            Bound::Unbounded => Self::zero(),
+        };
+
+        let end = match range.end_bound() {
+            Bound::Excluded(n) => n.saturating_sub(&Self::one()),
+            Bound::Included(n) => n.clone(),
+            Bound::Unbounded => Self::max_value(),
+        };
+
+        assert!(start <= end);
+        let start = AsPrimitive::<Self::UnsignedType>::as_(start);
+        let end = AsPrimitive::<Self::UnsignedType>::as_(end);
+
+        let mut size = (size_of::<Self>() + size_of::<u32>() - 1) / size_of::<u32>();
+        let mut random = Self::UnsignedType::zero();
+        let mut shift: u32 = 0;
+        while 0 < size {
+            let value = AsPrimitive::<Self::UnsignedType>::as_(r.next());
+            random = random.wrapping_shl(shift).saturating_add(&value);
+            shift += 32;
+            size -= 1;
+        }
+
+        let delta = end.saturating_sub(&start).saturating_add(&Self::UnsignedType::one());
+        let outcome = start.saturating_add(&random.checked_rem(&delta).unwrap());
+        AsPrimitive::<Self>::as_(outcome)
+    }
+}
+
+impl NumRangePrimitive for i8 {
+    type UnsignedType = u8;
+}
+
+impl NumRangePrimitive for u8 {
+    type UnsignedType = Self;
+}
+
+impl NumRangePrimitive for i16 {
+    type UnsignedType = u16;
+}
+
+impl NumRangePrimitive for u16 {
+    type UnsignedType = Self;
+}
+
+impl NumRangePrimitive for i32 {
+    type UnsignedType = u32;
+}
+
+impl NumRangePrimitive for u32 {
+    type UnsignedType = Self;
+}
+
+impl NumRangePrimitive for i64 {
+    type UnsignedType = u64;
+}
+
+impl NumRangePrimitive for u64 {
+    type UnsignedType = Self;
+}
+
+impl NumRangePrimitive for i128 {
+    type UnsignedType = u128;
+}
+
+impl NumRangePrimitive for u128 {
+    type UnsignedType = Self;
+}
+
+impl NumRangePrimitive for isize {
+    type UnsignedType = usize;
+}
+
+impl NumRangePrimitive for usize {
+    type UnsignedType = Self;
+}
 
 #[cfg(test)]
 mod tests {
