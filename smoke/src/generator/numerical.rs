@@ -56,7 +56,7 @@ pub fn range<T: NumPrimitive>(range: std::ops::Range<T>) -> NumRange<T> {
 mod tests {
     use super::*;
 
-    fn range_boundaries<T>(start: T, end: T)
+    fn num_range<T>(start: T, end: T)
     where T: NumPrimitive + PartialOrd
     {
         let (_, mut r) = R::new();
@@ -71,62 +71,62 @@ mod tests {
     }
 
     #[test]
-    fn i8_range() {
-        range_boundaries::<i8>(1, 16);
+    fn i8_num_range() {
+        num_range::<i8>(1, 16);
     }
 
     #[test]
-    fn u8_range() {
-        range_boundaries::<u8>(1, 16);
+    fn u8_num_range() {
+        num_range::<u8>(1, 16);
     }
 
     #[test]
-    fn i16_range() {
-        range_boundaries::<i16>(1, 16);
+    fn i16_num_range() {
+        num_range::<i16>(1, 16);
     }
 
     #[test]
-    fn u16_range() {
-        range_boundaries::<u16>(1, 16);
+    fn u16_num_range() {
+        num_range::<u16>(1, 16);
     }
 
     #[test]
-    fn i32_range() {
-        range_boundaries::<i32>(1, 16);
+    fn i32_num_range() {
+        num_range::<i32>(1, 16);
     }
 
     #[test]
-    fn u32_range() {
-        range_boundaries::<u32>(1, 16);
+    fn u32_num_range() {
+        num_range::<u32>(1, 16);
     }
 
     #[test]
-    fn i64_range() {
-        range_boundaries::<i64>(1, 16);
+    fn i64_num_range() {
+        num_range::<i64>(1, 16);
     }
 
     #[test]
-    fn u64_range() {
-        range_boundaries::<u64>(1, 16);
+    fn u64_num_range() {
+        num_range::<u64>(1, 16);
     }
 
     #[test]
-    fn i128_range() {
-        range_boundaries::<i128>(1, 16);
+    fn i128_num_range() {
+        num_range::<i128>(1, 16);
     }
 
     #[test]
-    fn u128_range() {
-        range_boundaries::<u128>(1, 16);
+    fn u128_num_range() {
+        num_range::<u128>(1, 16);
     }
 
     #[test]
-    fn isize_range() {
-        range_boundaries::<isize>(1, 16);
+    fn isize_num_range() {
+        num_range::<isize>(1, 16);
     }
 
     #[test]
-    fn usize_range() {
-        range_boundaries::<usize>(1, 16);
+    fn usize_num_range() {
+        num_range::<usize>(1, 16);
     }
 }
