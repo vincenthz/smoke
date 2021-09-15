@@ -54,6 +54,27 @@ pub fn range<T: NumPrimitive>(range: std::ops::Range<T>) -> NumRange<T> {
     NumRange::new(range)
 }
 
+
+/// The NumRangeBounds is a generator that delivers numbers in the interval
+/// set by a range.
+/// It uses range expressions or the std::ops::RangeBounds interface as the
+/// input range.
+/// The range syntax are `..`, `a..`, `..b`, `..=c`, `d..e` or `f..=g`.
+///
+/// As sample code of the `NumRangeBounds`:
+/// ```rust
+/// use smoke::generator::NumRangeBounds;
+///
+/// let n : NumRangeBounds<u64, std::ops::RangeFull> = NumRangeBounds::new(..);
+///
+/// let n = NumRangeBounds::new(std::ops::RangeInclusive::<u128>::new(1, 20));
+///
+/// let n = NumRangeBounds::new(1u32..20);
+///
+/// let n = NumRangeBounds::new(1..=20u32);
+///
+/// let n = NumRangeBounds::new(1..20);
+/// ```
 #[derive(Clone)]
 pub struct NumRangeBounds<T, U>(U, PhantomData<T>)
 where T: Sized,

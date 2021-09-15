@@ -188,6 +188,8 @@ impl R {
         T::num_range(self, min_value, max_value)
     }
 
+    /// It uses std::ops::RangeBounds or its range syntax as input.
+    /// The number type implements the NumRangePrimitive trait.
     pub fn num_range_bounds<T, U>(&mut self, range: &U) -> T
     where U: RangeBounds<T>,
           T: NumRangePrimitive,
@@ -408,7 +410,13 @@ define_NumPrimitive_impl_nonzero!(NonZeroU128, u128);
 define_NumPrimitive_impl_nonzero!(NonZeroUsize, usize);
 define_NumPrimitive_impl_nonzero!(NonZeroIsize, isize);
 
-
+/// Generate random numbers using range expressions.
+///
+/// It uses the std::ops::RangeBounds interface or the syntax like
+/// `..`, `a..`, `..b`, `..=c`, `d..e` or `f..=g`.
+///
+/// The generator is of size u32, therefore it's required to do different
+/// operations based on that size (shifting, casting, etc).
 pub trait NumRangePrimitive
 where Self: 'static + Copy,
       Self: PartialOrd + One + Zero + Bounded + SaturatingAdd + SaturatingSub,
@@ -416,40 +424,59 @@ where Self: 'static + Copy,
       Self::UnsignedType: AsPrimitive<Self>,
       Self::UnsignedType: One + Zero + WrappingShl + SaturatingAdd + SaturatingSub + CheckedRem
 {
+    /// The UnsignedType is equal in size of the Self type and
+    /// as the its name suggests, it's an unsigned type.
     type UnsignedType;
 
     fn generate_number<RB: RangeBounds<Self>>(r: &mut R, range: &RB) -> Self
     where Self: AsPrimitive<<Self as NumRangePrimitive>::UnsignedType>,
           u32: AsPrimitive<Self::UnsignedType>,
     {
+        // self domain (Self) - retrieve lower limit
         let start = match range.start_bound() {
             Bound::Excluded(n) => n.saturating_add(&Self::one()),
             Bound::Included(n) => n.clone(),
             Bound::Unbounded => Self::zero(),
         };
 
+        // self domain (Self) - retrieve upper limit
+        // i16::Max -> 32767, u16::Max -> 65535
         let end = match range.end_bound() {
             Bound::Excluded(n) => n.saturating_sub(&Self::one()),
             Bound::Included(n) => n.clone(),
             Bound::Unbounded => Self::max_value(),
         };
 
+        // verify limits in self domain (Self)
         assert!(start <= end);
-        let start = AsPrimitive::<Self::UnsignedType>::as_(start);
-        let end = AsPrimitive::<Self::UnsignedType>::as_(end);
 
+        // unsigned domain - generate random value - output: random (UnsignedType)
+        // size(u8) => 1, size(u16) => 1, size(u32) => 1,
+        // size(u64) => 2, size(u128) => 4, size(usize) => 1, 2 or 4
         let mut size = (size_of::<Self>() + size_of::<u32>() - 1) / size_of::<u32>();
         let mut random = Self::UnsignedType::zero();
-        let mut shift: u32 = 0;
+        let shift : u32 = 32;
         while 0 < size {
             let value = AsPrimitive::<Self::UnsignedType>::as_(r.next());
             random = random.wrapping_shl(shift).saturating_add(&value);
-            shift += 32;
             size -= 1;
         }
 
+        // change to unsigned domain (UnsignedType)
+        // safely cast - self domain (signed/unsigned) included in UnsignedType domain
+        let start = AsPrimitive::<Self::UnsignedType>::as_(start);
+        let end = AsPrimitive::<Self::UnsignedType>::as_(end);
+
+        // delta domain = [1 .. x] => modulo operation domain = [0 .. x - 1]
         let delta = end.saturating_sub(&start).saturating_add(&Self::UnsignedType::one());
+
+        // start + [0 .. delta - 1] && delta = end - start + 1
+        // start + [0 .. end - start]
+        // [start .. end]
         let outcome = start.saturating_add(&random.checked_rem(&delta).unwrap());
+
+        // safely cast (no loss of information)
+        // the start and end values belong to self domain
         AsPrimitive::<Self>::as_(outcome)
     }
 }
