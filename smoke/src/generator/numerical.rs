@@ -54,6 +54,14 @@ pub fn range<T: NumPrimitive>(range: std::ops::Range<T>) -> NumRange<T> {
     NumRange::new(range)
 }
 
+/// Generator for a simple numeric primitive using range expressions or
+/// range bounds
+pub fn range_bounds<T, U>(range: U) -> NumRangeBounds<T, U>
+where T: NumRangePrimitive,
+      U: RangeBounds<T>
+{
+    NumRangeBounds::new(range)
+}
 
 /// The NumRangeBounds is a generator that delivers numbers in the interval
 /// set by a range.
@@ -77,11 +85,11 @@ pub fn range<T: NumPrimitive>(range: std::ops::Range<T>) -> NumRange<T> {
 /// ```
 #[derive(Clone)]
 pub struct NumRangeBounds<T, U>(U, PhantomData<T>)
-where T: Sized,
+where T: NumRangePrimitive,
       U: RangeBounds<T>;
 
 impl<T, U> NumRangeBounds<T, U>
-where T: Sized,
+where T: NumRangePrimitive,
       U: RangeBounds<T>
 {
     pub fn new(range: U) -> Self {
