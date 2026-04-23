@@ -1,8 +1,8 @@
 [package]
 name = "smoke"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Vincent Hanquez <vincent@typed.io>"]
-edition = "2018"
+edition = "2024"
 license = "MIT/Apache-2.0"
 homepage = "https://github.com/vincenthz/smoke"
 repository = "https://github.com/vincenthz/smoke"
@@ -16,4 +16,3 @@ description = "A framework for testing"
 
 [features]
 default = []
-

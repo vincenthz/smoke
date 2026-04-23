@@ -19,7 +19,7 @@ pub trait Generator {
     type Item;
 
     /// Generate the next item
-    fn gen(&self, r: &mut R) -> Self::Item;
+    fn generate(&self, r: &mut R) -> Self::Item;
 
     /// Map the output of a generator through a function
     ///
@@ -118,8 +118,8 @@ pub struct BoxGenerator<T>(Box<dyn Generator<Item = T>>);
 
 impl<T> Generator for BoxGenerator<T> {
     type Item = T;
-    fn gen(&self, r: &mut R) -> Self::Item {
-        self.0.gen(r)
+    fn generate(&self, r: &mut R) -> Self::Item {
+        self.0.generate(r)
     }
     fn into_boxed(self) -> BoxGenerator<Self::Item> {
         self
@@ -132,7 +132,7 @@ pub struct Constant<T>(T);
 
 impl<T: Clone> Generator for Constant<T> {
     type Item = T;
-    fn gen(&self, _: &mut R) -> Self::Item {
+    fn generate(&self, _: &mut R) -> Self::Item {
         self.0.clone()
     }
 }
@@ -154,7 +154,7 @@ impl<T: NumPrimitive> Default for Num<T> {
 
 impl<T: NumPrimitive> Generator for Num<T> {
     type Item = T;
-    fn gen(&self, r: &mut R) -> T {
+    fn generate(&self, r: &mut R) -> T {
         r.num()
     }
 }
@@ -171,7 +171,7 @@ impl<T> NumRange<T> {
 
 impl<T: NumPrimitive> Generator for NumRange<T> {
     type Item = T;
-    fn gen(&self, r: &mut R) -> T {
+    fn generate(&self, r: &mut R) -> T {
         r.num_range(self.0.start, self.0.end)
     }
 }
@@ -188,8 +188,8 @@ where
     F: Fn(G::Item) -> O + Clone,
 {
     type Item = O;
-    fn gen(&self, r: &mut R) -> O {
-        let x = self.generator.gen(r);
+    fn generate(&self, r: &mut R) -> O {
+        let x = self.generator.generate(r);
         (self.f)(x)
     }
 }
@@ -207,10 +207,10 @@ where
     F: Fn(&G1::Item) -> G2,
 {
     type Item = (G1::Item, G2::Item);
-    fn gen(&self, r: &mut R) -> Self::Item {
-        let x = self.src_gen.gen(&mut r.sub());
+    fn generate(&self, r: &mut R) -> Self::Item {
+        let x = self.src_gen.generate(&mut r.sub());
         let g2 = (self.dst_gen)(&x);
-        let y = g2.gen(&mut r.sub());
+        let y = g2.generate(&mut r.sub());
         (x, y)
     }
 }
@@ -234,9 +234,9 @@ where
     F: Fn(G1::Item, G2::Item) -> O + Clone,
 {
     type Item = O;
-    fn gen(&self, r: &mut R) -> Self::Item {
-        let x1 = self.gen1.gen(&mut r.sub());
-        let x2 = self.gen2.gen(&mut r.sub());
+    fn generate(&self, r: &mut R) -> Self::Item {
+        let x1 = self.gen1.generate(&mut r.sub());
+        let x2 = self.gen2.generate(&mut r.sub());
         (self.f)(x1, x2)
     }
 }
@@ -266,10 +266,10 @@ where
     F: Fn(G1::Item, G2::Item, G3::Item) -> O + Clone,
 {
     type Item = O;
-    fn gen(&self, r: &mut R) -> Self::Item {
-        let x1 = self.gen1.gen(&mut r.sub());
-        let x2 = self.gen2.gen(&mut r.sub());
-        let x3 = self.gen3.gen(&mut r.sub());
+    fn generate(&self, r: &mut R) -> Self::Item {
+        let x1 = self.gen1.generate(&mut r.sub());
+        let x2 = self.gen2.generate(&mut r.sub());
+        let x3 = self.gen3.generate(&mut r.sub());
         (self.f)(x1, x2, x3)
     }
 }
@@ -291,10 +291,10 @@ where
     F: Fn(&G::Item) -> bool + Clone,
 {
     type Item = G::Item;
-    fn gen(&self, r: &mut R) -> Self::Item {
+    fn generate(&self, r: &mut R) -> Self::Item {
         let mut retry = self.retry;
         loop {
-            let x = self.generator.gen(r);
+            let x = self.generator.generate(r);
             if (self.f)(&x) {
                 break x;
             }
@@ -315,7 +315,7 @@ pub struct OneOf<T> {
 
 impl<T: Clone> Generator for OneOf<T> {
     type Item = T;
-    fn gen(&self, r: &mut R) -> Self::Item {
+    fn generate(&self, r: &mut R) -> Self::Item {
         let nb = r.num_range(0, self.data.len() - 1);
         self.data[nb].clone()
     }
@@ -340,9 +340,9 @@ impl<T> Choose<T> {
 
 impl<T> Generator for Choose<T> {
     type Item = T;
-    fn gen(&self, r: &mut R) -> Self::Item {
+    fn generate(&self, r: &mut R) -> Self::Item {
         let nb = r.num_range(0, self.generators.len() - 1);
-        (self.generators[nb]).gen(&mut r.sub())
+        (self.generators[nb]).generate(&mut r.sub())
     }
 }
 
@@ -375,10 +375,10 @@ impl<T> Frequency<T> {
 
 impl<T> Generator for Frequency<T> {
     type Item = T;
-    fn gen(&self, r: &mut R) -> Self::Item {
+    fn generate(&self, r: &mut R) -> Self::Item {
         let nb = r.num_range(0, self.frequencies.len() - 1);
         let idx = self.frequencies[nb];
-        (&self.generators[idx].1).gen(&mut r.sub())
+        (&self.generators[idx].1).generate(&mut r.sub())
     }
 }
 
@@ -395,9 +395,9 @@ where
     B: Generator<Item = U>,
 {
     type Item = (T, U);
-    fn gen(&self, r: &mut R) -> Self::Item {
-        let a = self.gen_a.gen(&mut r.sub());
-        let b = self.gen_b.gen(&mut r.sub());
+    fn generate(&self, r: &mut R) -> Self::Item {
+        let a = self.gen_a.generate(&mut r.sub());
+        let b = self.gen_b.generate(&mut r.sub());
         (a, b)
     }
 }
@@ -415,11 +415,11 @@ where
     B: Generator<Item = T>,
 {
     type Item = T;
-    fn gen(&self, r: &mut R) -> Self::Item {
+    fn generate(&self, r: &mut R) -> Self::Item {
         if r.bool() {
-            self.gen_a.gen(&mut r.sub())
+            self.gen_a.generate(&mut r.sub())
         } else {
-            self.gen_b.gen(&mut r.sub())
+            self.gen_b.generate(&mut r.sub())
         }
     }
 }
@@ -437,12 +437,12 @@ where
     G: Generator<Item = T>,
 {
     type Item = Vec<T>;
-    fn gen(&self, r: &mut R) -> Self::Item {
-        let sz = (self.size).gen(r);
+    fn generate(&self, r: &mut R) -> Self::Item {
+        let sz = (self.size).generate(r);
         let mut v = Vec::with_capacity(sz);
         let mut sub_r = r.sub();
         for _ in 0..sz {
-            let cell = self.t.gen(&mut sub_r);
+            let cell = self.t.generate(&mut sub_r);
             v.push(cell)
         }
         v
@@ -454,12 +454,12 @@ use std::ptr;
 
 /// A generator of array of constant length N where elements are defined by a generator
 pub struct Array<G, const N: usize> {
-    gen: G,
+    generator: G,
 }
 
 impl<G: Generator, const N: usize> Array<G, N> {
     pub fn new(g: G) -> Self {
-        Self { gen: g }
+        Self { generator: g }
     }
 }
 
@@ -468,11 +468,11 @@ where
     G: Generator<Item = T>,
 {
     type Item = [T; N];
-    fn gen<'a>(&self, r: &mut R) -> Self::Item {
+    fn generate<'a>(&self, r: &mut R) -> Self::Item {
         let mut items: [MaybeUninit<T>; N] = unsafe { MaybeUninit::uninit().assume_init() };
         let mut sub_r = r.sub();
         for elem in &mut items[..] {
-            let cell: T = (self.gen).gen(&mut sub_r);
+            let cell: T = (self.generator).generate(&mut sub_r);
             unsafe { ptr::write(elem.as_mut_ptr(), cell) }
         }
 
@@ -525,8 +525,8 @@ pub fn choose<T>(gens: Vec<Box<dyn Generator<Item = T>>>) -> Choose<T> {
 pub fn frequency<T>(gens: Vec<(usize, Box<dyn Generator<Item = T>>)>) -> Frequency<T> {
     assert!(!gens.is_empty());
     let mut frequencies_gen = Vec::new();
-    for (freq, gen) in gens.into_iter() {
-        frequencies_gen.push((freq, BoxGenerator(gen)))
+    for (freq, generator) in gens.into_iter() {
+        frequencies_gen.push((freq, BoxGenerator(generator)))
     }
 
     Frequency::new(frequencies_gen)
@@ -560,7 +560,9 @@ pub fn array<EL, T, const SZ: usize>(elements: EL) -> Array<EL, SZ>
 where
     EL: Generator<Item = T>,
 {
-    Array { gen: elements }
+    Array {
+        generator: elements,
+    }
 }
 
 /// Create a vector of elements where the size of the vector is determined by the first generator

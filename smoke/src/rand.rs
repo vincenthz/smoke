@@ -10,7 +10,7 @@
 //! * add some multiple cases f32/f64 generators
 
 use core::num::{
-    NonZeroIsize, NonZeroU128, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
+    NonZeroIsize, NonZeroU8, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize,
 };
 
 /// Seed of random generation
@@ -21,7 +21,7 @@ use core::num::{
 ///
 /// All pseudo random generators need to be derived from this
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
-pub struct Seed(u128);
+pub struct Seed(pub(crate) u128);
 
 /// A pseudo random generator at a given time
 ///

@@ -1,10 +1,10 @@
+use super::R;
 use super::generator::Generator;
-use super::initonce::InitOnce;
 use super::property::{self, Property};
 use super::rand::Seed;
 use super::ux::{TestResults, TestRunStatus};
-use super::R;
-use std::panic::{catch_unwind, set_hook, take_hook, AssertUnwindSafe, PanicInfo};
+use std::panic::{AssertUnwindSafe, PanicHookInfo, catch_unwind, set_hook, take_hook};
+use std::sync::Once;
 use std::time::{Duration, SystemTime};
 
 const DEFAULT_NB_TESTS: u64 = 1_000;
@@ -19,7 +19,8 @@ use crate::generator::SuchThatRetryFailure;
 
 use std::fmt;
 
-static INSTANCE_SEED: InitOnce<Seed> = InitOnce::init();
+static mut INSTANCE_SEED: Seed = Seed(0u128);
+static INSTANCE_SEED_INIT: Once = Once::new();
 
 fn run_catch_panic<F, R>(f: F) -> Result<R, PanicError>
 where
@@ -71,7 +72,7 @@ impl<G> Forall<G> {
 /// ```
 /// use smoke::{Generator, generator::num, property::equal, forall};
 ///
-/// let property_equal = forall(num::<u32>()).ensure(|x| equal(*x, *x));
+/// let property_equal = forall(num::<u32>()).ensure(|x| equal(x, x));
 /// ```
 ///
 pub fn forall<T, G>(g: G) -> Forall<G>
@@ -125,7 +126,7 @@ where
         for _ in 0..nb_tests {
             let mut test_rng = r.sub();
 
-            let input = generator.gen(&mut test_rng);
+            let input = generator.generate(&mut test_rng);
             let to_report = format!("{:?}", &input);
             match run_catch_panic(|| property_closure(input)) {
                 Err(PanicError(p)) => {
@@ -156,7 +157,13 @@ impl Context {
         use std::str::FromStr;
         let seed = match std::env::var(ENV_SEED) {
             Ok(v) => Seed::from_str(&v).expect("invalid seed format"),
-            Err(_) => *INSTANCE_SEED.load(Seed::generate),
+            Err(_) => unsafe {
+                INSTANCE_SEED_INIT.call_once(|| {
+                    let seed = Seed::generate();
+                    INSTANCE_SEED = seed;
+                });
+                INSTANCE_SEED
+            },
         };
         let nb_tests = match std::env::var(ENV_NB_TESTS) {
             Ok(v) => v.parse().expect("invalid seed format"),
@@ -193,7 +200,7 @@ impl Context {
 ///
 /// run(|ctx| {
 ///     forall(num::<u32>())
-///         .ensure(|n| greater(*n + 1, *n))
+///         .ensure(|n| greater(n + 1, n))
 ///         .run(ctx);
 ///     // other test instances
 /// });
@@ -205,7 +212,7 @@ where
 {
     let mut ctx = Context::new();
 
-    fn dont_print_panic(_: &PanicInfo) {}
+    fn dont_print_panic(_: &PanicHookInfo) {}
 
     set_hook(Box::new(dont_print_panic));
 

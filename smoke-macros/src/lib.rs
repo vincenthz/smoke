@@ -1,10 +1,10 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
+    Expr, FnArg, Ident, ItemFn, Member, Pat,
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
     token::Comma,
-    Expr, FnArg, Ident, ItemFn, Member, Pat,
 };
 
 struct Args {

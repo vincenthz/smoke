@@ -11,6 +11,6 @@ mod tests {
 
     #[smoketest{a: num::<u32>(), b: num::<u32>() }]
     fn test2(a: u32, b: u32) {
-        property::equal(a + b, b + a)
+        property::equal(a.wrapping_add(b), b.wrapping_add(a))
     }
 }

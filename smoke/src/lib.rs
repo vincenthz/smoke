@@ -16,9 +16,7 @@ mod rand;
 mod run;
 pub mod ux;
 
-mod initonce;
-
 pub use generator::Generator;
 pub use property::Property;
-pub use rand::{NumPrimitive, Seed, R};
-pub use run::{forall, run, Context, Ensure, Testable};
+pub use rand::{NumPrimitive, R, Seed};
+pub use run::{Context, Ensure, Testable, forall, run};

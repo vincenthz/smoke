@@ -50,6 +50,12 @@ pub trait Property {
 /// A Generic Boxed Property
 pub struct BoxProperty(Box<dyn Property>);
 
+impl Property for BoxProperty {
+    fn result(&self) -> Outcome {
+        self.0.result()
+    }
+}
+
 /// Logical And between properties
 pub struct And<A, B> {
     prop_a: A,
