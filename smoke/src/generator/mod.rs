@@ -1,9 +1,9 @@
 //! Generators of elements
 //!
-//! Generator<T> is a fully specified way to get you an arbitrary T object
+//! `Generator<T>` is a fully specified way to get you an arbitrary T object
 //!
 //! The general interface works very similarly to an iterator, but instead
-//! it never stop generating data, thus instead of returning an Option<Item>
+//! it never stop generating data, thus instead of returning an `Option<Item>`
 //! it returns the Item directly, and takes an extra random generator
 //! to generate the next element.
 
